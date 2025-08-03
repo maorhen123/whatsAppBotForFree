@@ -65,8 +65,7 @@ function getWhatsAppClient() {
         await client.sendMessage(msg.from, `כאן אני בודק עם 2 עובד יאללה מגניב אם קיבלת נראה שעובד`);
       } else {
         await client.sendMessage(msg.from,
-          `👋 שלום! כדי להתחיל, שלח את המילה *התחל*.
-אם כבר התחלת, בחר מהכפתורים שהופיעו לך.`
+          `👋 שלום! כדי להתחיל, שלח את המילה *התחל*`
         );
       }
     });
