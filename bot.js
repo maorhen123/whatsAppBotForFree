@@ -104,11 +104,9 @@ app.get("/qr-code", async (req, res) => {
 
 app.get("/new-qr-code", async (req, res) => {
   try {
-    setTimeout(() => {
       console.log("🔁 Reinitializing WhatsApp client...");
       client.destroy();
       client.initialize();
-    }, 5000);
 
     client.once("qr", (qr) => {
       qrCode.toDataURL(qr, (err, url) => {
