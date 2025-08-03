@@ -77,30 +77,34 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
+
+let lastQr = "";
+
+client.on("qr", (qr) => {
+  lastQr = qr;
+  qrCodeTerminal.generate(qr, { small: true });
+  console.log("🔄 קיבלתי QR חדש!");
+});
+
 // route להפקת QR דרך API
 app.get("/qr-code", async (req, res) => {
-  try {
-    client.once("qr", (qr) => {
-      qrCode.toDataURL(qr, (err, url) => {
-        if (err) {
-          console.error("⚠️ Failed to generate QR:", err);
-          res
-            .status(500)
-            .json({ status: "error", message: "Failed to generate QR" });
-          return;
-        }
-        qrImageUrl = url;
-        res.json({ status: "success", qr: url });
-      });
-    });
-  } catch (error) {
-    console.error("❌ Failed to reinitialize WhatsApp client:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Failed to reinitialize WhatsApp client",
+  if (!lastQr) {
+    return res.json({
+      status: "waiting",
+      message: "הקוד עדיין לא מוכן, נסה שוב בעוד רגע.",
     });
   }
+
+  qrCode.toDataURL(lastQr, (err, url) => {
+    if (err) {
+      console.error("⚠️ Failed to generate QR:", err);
+      return res.status(500).json({ status: "error", message: "Failed to generate QR" });
+    }
+
+    res.json({ status: "success", qr: url });
+  });
 });
+
 
 
 // הפעלת השרת
