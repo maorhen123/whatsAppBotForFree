@@ -78,35 +78,55 @@ app.use(bodyParser.json());
 app.use(express.static("public"));
 
 // route להפקת QR דרך API
-app.get("/qr-code", async (req, res) => {
-  try {
-    setTimeout(() => {
-      console.log("🔁 Reinitializing WhatsApp client...");
-      client.destroy();
-      client.initialize();
-    }, 5000);
+// app.get("/qr-code", async (req, res) => {
+//   try {
+//     setTimeout(() => {
+//       console.log("🔁 Reinitializing WhatsApp client...");
+//       client.destroy();
+//       client.initialize();
+//     }, 5000);
 
-    client.once("qr", (qr) => {
-      qrCode.toDataURL(qr, (err, url) => {
-        if (err) {
-          console.error("⚠️ Failed to generate QR:", err);
-          res
-            .status(500)
-            .json({ status: "error", message: "Failed to generate QR" });
-          return;
-        }
-        qrImageUrl = url;
-        res.json({ status: "success", qr: url });
-      });
-    });
-  } catch (error) {
-    console.error("❌ Failed to reinitialize WhatsApp client:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Failed to reinitialize WhatsApp client",
-    });
+//     client.once("qr", (qr) => {
+//       qrCode.toDataURL(qr, (err, url) => {
+//         if (err) {
+//           console.error("⚠️ Failed to generate QR:", err);
+//           res
+//             .status(500)
+//             .json({ status: "error", message: "Failed to generate QR" });
+//           return;
+//         }
+//         qrImageUrl = url;
+//         res.json({ status: "success", qr: url });
+//       });
+//     });
+//   } catch (error) {
+//     console.error("❌ Failed to reinitialize WhatsApp client:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to reinitialize WhatsApp client",
+//     });
+//   }
+// });
+app.get("/qr-code", async (req, res) => {
+  if (qrImageUrl) {
+    res.json({ status: "success", qr: qrImageUrl });
+  } else {
+    res.json({ status: "pending", message: "QR not ready yet" });
   }
 });
+
+app.get("/refresh-qr", async (req, res) => {
+  try {
+    console.log("♻️ Refreshing QR code...");
+    client.destroy();
+    client.initialize();
+    res.json({ status: "success", message: "QR is being refreshed" });
+  } catch (error) {
+    console.error("❌ Error refreshing QR:", error);
+    res.status(500).json({ status: "error", message: "Failed to refresh QR" });
+  }
+});
+
 
 // הפעלת השרת
 app.listen(port, () => {
