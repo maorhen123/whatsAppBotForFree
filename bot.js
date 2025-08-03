@@ -102,39 +102,6 @@ app.get("/qr-code", async (req, res) => {
   }
 });
 
-let newQr = false; 
-
-if(newQr === true) {
-
-  app.get("/new-qr-code", async (req, res) => {
-    try {
-        console.log("🔁 Reinitializing WhatsApp client...");
-        client.destroy();
-        client.initialize();
-  
-      client.once("qr", (qr) => {
-        qrCode.toDataURL(qr, (err, url) => {
-          if (err) {
-            console.error("⚠️ Failed to generate QR:", err);
-            res
-              .status(500)
-              .json({ status: "error", message: "Failed to generate QR" });
-            return;
-          }
-          qrImageUrl = url;
-          res.json({ status: "success", qr: url });
-        });
-      });
-    } catch (error) {
-      console.error("❌ Failed to reinitialize WhatsApp client:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to reinitialize WhatsApp client",
-      });
-    }
-  });
-}
-
 
 // הפעלת השרת
 app.listen(port, () => {
