@@ -1,0 +1,114 @@
+const qrCodeTerminal = require("qrcode-terminal");
+const puppeteer = require("puppeteer");
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const qrCode = require("qrcode");
+const { Client } = require("whatsapp-web.js");
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// הגדרת לקוח וואטסאפ
+const client = new Client({
+  webVersionCache: {
+    puppeteer: { headless: true },
+    qrRefreshIntervalMs: false,
+    qrTimeoutMs: 0,
+    type: "remote",
+    remotePath:
+      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+  },
+});
+
+let qrImageUrl = "";
+
+// יצירת QR בקונסול
+client.on("qr", (qr) => {
+  qrCodeTerminal.generate(qr, { small: true });
+});
+
+// התחברות בוט מוכנה
+client.on("ready", () => {
+  console.log("✅ WhatsApp client is ready!");
+});
+
+// קבלת הודעות עם כפתורים
+client.on("message", async (msg) => {
+  if (msg.from.includes("-")) {
+    console.log("📢 הודעה מקבוצה – לא מטופלת");
+    return;
+  }
+
+  if (msg.body === "התחל") {
+      await client.sendMessage(msg.from, 
+         `שלום וברוכים הבאים לבוט הבדיקה 🤖
+
+כאן תוכלו לבדוק תגובות שונות לפי בחירתכם.
+
+*1* - בדיקה 1  
+*2* - בדיקה 2`
+      )
+  }
+
+  if (msg.body === "1") {
+    await client.sendMessage(
+      msg.from,
+      `כאן אני בודק עם 1 עובד יאללה מגניב אם קיבלת נראה שעובד`
+    );
+  } else if (msg.body === "2") {
+    await client.sendMessage(
+      msg.from,
+      `כאן אני בודק עם 2 עובד יאללה מגניב אם קיבלת נראה שעובד`
+    );
+  } else if (msg.body !== "התחל") {
+    await client.sendMessage(
+      msg.from,
+      `👋 שלום! כדי להתחיל, שלח את המילה *התחל*.
+אם כבר התחלת, בחר מהכפתורים שהופיעו לך.`
+    );
+  }
+});
+
+client.initialize();
+
+// הגדרות Express
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static("public"));
+
+// route להפקת QR דרך API
+app.get("/qr-code", async (req, res) => {
+  try {
+    setTimeout(() => {
+      console.log("🔁 Reinitializing WhatsApp client...");
+      client.destroy();
+      client.initialize();
+    }, 5000);
+
+    client.once("qr", (qr) => {
+      qrCode.toDataURL(qr, (err, url) => {
+        if (err) {
+          console.error("⚠️ Failed to generate QR:", err);
+          res
+            .status(500)
+            .json({ status: "error", message: "Failed to generate QR" });
+          return;
+        }
+        qrImageUrl = url;
+        res.json({ status: "success", qr: url });
+      });
+    });
+  } catch (error) {
+    console.error("❌ Failed to reinitialize WhatsApp client:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to reinitialize WhatsApp client",
+    });
+  }
+});
+
+// הפעלת השרת
+app.listen(port, () => {
+  console.log(`🚀 Server running at http://localhost:${port}`);
+});
