@@ -80,6 +80,30 @@ app.use(express.static("public"));
 // route להפקת QR דרך API
 app.get("/qr-code", async (req, res) => {
   try {
+    client.once("qr", (qr) => {
+      qrCode.toDataURL(qr, (err, url) => {
+        if (err) {
+          console.error("⚠️ Failed to generate QR:", err);
+          res
+            .status(500)
+            .json({ status: "error", message: "Failed to generate QR" });
+          return;
+        }
+        qrImageUrl = url;
+        res.json({ status: "success", qr: url });
+      });
+    });
+  } catch (error) {
+    console.error("❌ Failed to reinitialize WhatsApp client:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to reinitialize WhatsApp client",
+    });
+  }
+});
+
+app.get("/new-qr-code", async (req, res) => {
+  try {
     setTimeout(() => {
       console.log("🔁 Reinitializing WhatsApp client...");
       client.destroy();
